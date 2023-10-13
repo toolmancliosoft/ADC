@@ -1,0 +1,211 @@
+// VerilogA for workshop_20140310, controller, veriloga
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+
+module controller(clk, go, valid, result, sample, value, comp_out);
+input clk;
+electrical clk;
+input go;
+electrical go;
+output valid;
+electrical valid;
+output [9:0] result;
+electrical [9:0] result;
+output sample;
+electrical sample;
+output [9:0] value;
+electrical [9:0] value;
+input comp_out;
+electrical comp_out;
+
+
+parameter real sDone = 3 ;
+parameter real sConv = 2 ;
+parameter real sSample = 1 ;
+parameter real sWait = 0 ;
+parameter real vhi= 1 ;
+parameter real vth=0.5 ;
+parameter tr = 10p ;
+parameter td = 10p ;
+
+integer convert ;		// ready to convert
+integer state ;			// state of conversion
+integer data_ready ;
+//integer sample_data ;
+integer sampledata ;
+//integer valid_state ;
+integer checked ;
+
+integer bit_9, bit_8, bit_7, bit_6, bit_5, bit_4, bit_3, bit_2, bit_1, bit_0 ;
+integer test_9, test_8, test_7, test_6, test_5, test_4, test_3, test_2, test_1, test_0 ;
+
+analog begin
+
+@( cross( V(go)- vth, 1)) convert = 1 ;
+
+@( cross( V(clk)- vth, 1)) begin
+      checked = 0 ;
+//    data ready, lsb, output data and sample period 1
+      if( checked==0 && state==12 && convert == 1) begin
+	test_9 = (V(comp_out) > vth) ? 1 : 0 ;
+        sampledata = 1 ;
+        state =  1 ;
+//	latch dat into output register
+        data_ready =  1 ;
+	checked = 1 ;
+
+	bit_0 = test_0 ;
+	bit_1 = test_1 ;
+	bit_2 = test_2 ;
+	bit_3 = test_3 ;
+	bit_4 = test_4 ;
+	bit_5 = test_5 ;
+	bit_6 = test_6 ;
+	bit_7 = test_7 ;
+	bit_8 = test_8 ;
+	bit_9 = test_9 ;
+
+        test_0 = 0;
+        test_1 = 0;
+        test_2 = 0;
+        test_3 = 0;
+        test_4 = 0;
+        test_5 = 0;
+        test_6 = 0;
+        test_7 = 0;
+        test_8 = 0;
+        test_9 = 0;
+      end
+//	test msb-9
+      if( checked==0 && state == 11  && convert == 1) begin
+	test_8   = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_9  = 1 ;
+	state   = state + 1 ;
+	checked = 1 ;
+      end
+//	test msb-8
+      if( checked==0 && state == 10  && convert == 1) begin
+	test_7   = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_8  = 1 ;
+	state   = state + 1 ;
+	checked = 1 ;
+      end
+//	test msb-7
+      if( checked==0 && state == 9  && convert == 1) begin
+	test_6    = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_7  = 1 ;
+	state   = state+ 1 ;
+	checked = 1 ;
+       end
+//	test msb-6
+      if( checked==0 && state == 8  && convert == 1) begin
+	test_5   = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_6  = 1 ;
+	state   = state+ 1 ;
+	checked = 1 ;
+       end
+//	test msb-5
+      if( checked==0 && state ==7  && convert == 1) begin
+	test_4 = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_5 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+       end
+//	test msb-4
+      if( checked==0 && state ==6  && convert == 1) begin
+	test_3 = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_4 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+      end
+//	test msb-3
+      if( checked==0 && state ==5  && convert == 1) begin
+	test_2 = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_3 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+      end
+// 	test msb-2
+      if( checked==0 && state ==4  && convert == 1) begin
+	test_1 = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_2 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+      end
+//	test msb-1
+      if( checked==0 && state ==3 && convert == 1 ) begin
+	test_0 = ( V(comp_out) > vth) ? 1 : 0 ;
+	test_1 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+      end
+//	test msb
+      if( checked==0 && state ==2 && convert == 1) begin
+        sampledata = 0 ;
+	test_0 = 1 ;
+	state = state+ 1 ;
+	checked = 1 ;
+      end
+//    sample, sample period 2
+      if( checked==0 && state == 1 && convert == 1) begin
+        state =  state + 1 ;
+        data_ready = 0 ;
+      end
+      if( checked==0 && state == 0 && convert == 1) begin
+        sampledata = 1 ;
+        state =  1 ;
+//	latch dat into output register
+        data_ready =  1 ;
+
+	bit_0 = test_0 ;
+	bit_1 = test_1 ;
+	bit_2 = test_2 ;
+	bit_3 = test_3 ;
+	bit_4 = test_4 ;
+	bit_5 = test_5 ;
+	bit_6 = test_6 ;
+	bit_7 = test_7 ;
+	bit_8 = test_8 ;
+	bit_9 = test_9 ;
+
+        test_0 = 0;
+        test_1 = 0;
+        test_2 = 0;
+        test_3 = 0;
+        test_4 = 0;
+        test_5 = 0;
+        test_6 = 0;
+        test_7 = 0;
+        test_8 = 0;
+        test_9 = 0;
+      end
+  end 
+  V(valid) <+ transition( vhi*data_ready, td, tr, tr)  ;
+  V(sample) <+ transition(vhi*(data_ready || sampledata), td, tr, tr) ;
+
+  V(value[9]) <+ transition(vhi*test_9, td, tr, tr) ;
+  V(value[8]) <+ transition(vhi*test_8, td, tr, tr) ;
+  V(value[7]) <+ transition(vhi*test_7, td, tr, tr) ;
+  V(value[6]) <+ transition(vhi*test_6, td, tr, tr) ;
+  V(value[5]) <+ transition(vhi*test_5, td, tr, tr) ;
+  V(value[4]) <+ transition(vhi*test_4, td, tr, tr) ;
+  V(value[3]) <+ transition(vhi*test_3, td, tr, tr) ;
+  V(value[2]) <+ transition(vhi*test_2, td, tr, tr) ;
+  V(value[1]) <+ transition(vhi*test_1, td, tr, tr) ;
+  V(value[0]) <+ transition(vhi*test_0, td, tr, tr) ;
+
+  V(result[9]) <+ transition(vhi*bit_9, td, tr, tr) ;
+  V(result[8]) <+ transition(vhi*bit_8, td, tr, tr) ;
+  V(result[7]) <+ transition(vhi*bit_7, td, tr, tr) ;
+  V(result[6]) <+ transition(vhi*bit_6, td, tr, tr) ;
+  V(result[5]) <+ transition(vhi*bit_5, td, tr, tr) ;
+  V(result[4]) <+ transition(vhi*bit_4, td, tr, tr) ;
+  V(result[3]) <+ transition(vhi*bit_3, td, tr, tr) ;
+  V(result[2]) <+ transition(vhi*bit_2, td, tr, tr) ;
+  V(result[1]) <+ transition(vhi*bit_1, td, tr, tr) ;
+  V(result[0]) <+ transition(vhi*bit_0, td, tr, tr) ;
+
+end
+endmodule

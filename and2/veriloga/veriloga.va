@@ -1,0 +1,84 @@
+// VerilogA for bmslogic, and2.va, verilog
+//last revised 6/10/02, kebinz
+//
+// and2
+//
+// -  2 inputs, and gate
+//
+//LIMITATIONS:
+// This a simple Verilog-A model for digital and gate. Only transient analysis 
+// can be applied. Other analogy analyses, such as, AC analysis, small signal
+// analysis, transfer functions, ect., can not be applied.
+
+// INCLUDE FILES:
+`include "constants.h"
+`include "discipline.h"
+
+//=============================================================================
+module and2 (Y, A, B);
+input A, B ; 		// logic inputs
+output Y;               // logic output
+electrical Y, A, B ;	// Signals are analog signals
+
+// INSTANCE PARAMETERS:
+parameter real vhi = 3;	        	// voltage [v] for logic high
+parameter real vlo = 0 from (-inf:vhi) ; // voltage [v] for logic low
+parameter real vthresh = 0.5*(vhi+vlo) ; // switch voltage [v] for nand_gate
+parameter real tplh = 10n from (0:1m); // Prop delay time [s] for rising output 
+parameter real tphl = 10n from (0:1m); // Prop delay time[s] for falling output 
+parameter real tr = tplh from (0:2*tplh]; // rise time [s] for gate output
+parameter real tf = tphl from (0:2*tphl]; // fall time [s] for gate output
+
+
+// LOCAL VARIABLES:
+real vy;       // output voltage for the transition
+real tdel;     // current value of the delay depending on existing output value
+integer a, b, y; // logic values of inputs and outputs
+integer xflag; // event indication - flag to recalculate 
+integer ynow;  // present value of Y to determine direction 
+
+//=============================================================================
+   analog begin
+   
+     @ ( initial_step ) begin	 
+         // warn user if input threshold doesn't match
+         // output 
+	      if (vthresh > vhi || vthresh < vlo) begin
+	         $display
+	("%M: Inconsistent input threshold specification w/logic family.\n");
+	      end
+         xflag = 1;  // calculate the output variables
+     end 
+      
+      //
+      // detect the events set the flag if needed. 
+      // 
+      @ (cross(V(A) - vthresh, 0) )	xflag = 1;
+      @ (cross(V(B) - vthresh, 0) )	xflag = 1;
+      //
+      // define the logic function.
+      //
+      if (xflag) begin
+         a = V(A) > vthresh;
+         b = V(B) > vthresh;
+         xflag = 0;
+         ynow = y;
+         y = (a && b) ;
+         case (1)
+         (ynow > y) : begin  // high to low 
+            tdel = tphl - tf/2.0 ;     
+            if (tdel < 0.05*tf) tdel = 0; // delay is less than tf/20, neglect.
+         end 
+         (ynow < y) : begin // low to high
+            tdel = tplh - tr/2.0 ;
+            if (tdel < 0.05*tr) tdel = 0; // delay is less than tf/20, neglect.
+         end
+         (ynow == y) :if (tdel < 0.05*tr) tdel = 0; // no change
+         endcase
+         vy = y ? vhi : vlo; // if y=1 then vy=vhi; if y=0 then vy=vlo 
+      end
+      V(Y) <+ transition( vy, tdel, tr, tf);
+   end
+endmodule
+
+
